@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: ledgerline
+    runtime: python
+    plan: starter
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn ledgerline.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: LEDGERLINE_ADMIN_TOKEN
+        generateValue: true
+      - key: LEDGERLINE_DB_PATH
+        value: /var/data/ledgerline.db
+    disk:
+      name: ledgerline-data
+      mountPath: /var/data
+      sizeGB: 1
