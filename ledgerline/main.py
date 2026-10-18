@@ -81,7 +81,7 @@ def health():
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "checkout_ready": bool(STRIPE_SECRET_KEY), "price": "$600", "error": None})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request, "checkout_ready": bool(STRIPE_SECRET_KEY), "price": "$600", "error": None})
 
 @app.post("/intake")
 def intake(request: Request, name: str = Form(...), business: str = Form(...), email: str = Form(...), website: str = Form(""), need: str = Form(...), consent: Optional[str] = Form(None)):
@@ -92,7 +92,7 @@ def intake(request: Request, name: str = Form(...), business: str = Form(...), e
             (payload.name, payload.business, str(payload.email), payload.website, payload.need, int(payload.consent), now))
         lead_id = cur.lastrowid
     if not STRIPE_SECRET_KEY:
-        return templates.TemplateResponse("thanks.html", {"request": request, "lead_id": lead_id, "checkout_ready": False}, status_code=202)
+        return templates.TemplateResponse(request=request, name="thanks.html", context={"request": request, "lead_id": lead_id, "checkout_ready": False}, status_code=202)
     return RedirectResponse(url=f"/checkout?lead_id={lead_id}", status_code=303)
 
 @app.get("/checkout")
@@ -129,11 +129,11 @@ def payment_success(request: Request, session_id: str):
     with db() as conn:
         order = conn.execute("SELECT payment_status FROM orders WHERE stripe_session_id=?", (session_id,)).fetchone()
     status = order["payment_status"] if order else "pending_verification"
-    return templates.TemplateResponse("payment.html", {"request": request, "heading": "Thank you", "message": "We are verifying your payment securely. Fulfilment starts only after the payment provider confirms it.", "status": status})
+    return templates.TemplateResponse(request=request, name="payment.html", context={"request": request, "heading": "Thank you", "message": "We are verifying your payment securely. Fulfilment starts only after the payment provider confirms it.", "status": status})
 
 @app.get("/payment/cancelled", response_class=HTMLResponse)
 def payment_cancelled(request: Request, lead_id: int):
-    return templates.TemplateResponse("payment.html", {"request": request, "heading": "Checkout cancelled", "message": "No payment was recorded by this return page. You can contact us if you want to resume.", "status": "cancelled"})
+    return templates.TemplateResponse(request=request, name="payment.html", context={"request": request, "heading": "Checkout cancelled", "message": "No payment was recorded by this return page. You can contact us if you want to resume.", "status": "cancelled"})
 
 @app.post("/webhooks/stripe")
 async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Header(None)):
@@ -178,4 +178,4 @@ def admin_summary(authorization: Optional[str] = Header(None)):
 
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
-    return templates.TemplateResponse("privacy.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="privacy.html", context={"request": request})
